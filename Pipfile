@@ -10,6 +10,8 @@ django-countries = "7.5.1"
 requests = "2.31.0"
 djangorestframework = "==3.14.0"
 drf-spectacular = "*"
+celery = "==5.3.1"
+redis = "==4.6.0"
 
 [dev-packages]
 pytest-django = "4.5.2"
