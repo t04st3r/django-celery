@@ -95,8 +95,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Celery settings
-CELERY_BROKER_URL = "redis://localhost:6379"
-CELERY_RESULT_BACKEND = "redis://localhost:6379"
+CELERY_BROKER_URL = environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
+CELERY_RESULT_BACKEND = environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
 
 
 # Database
@@ -161,3 +161,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Email settings (maildev)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = environ.get("EMAIL_PORT", "1025")
+EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER", "dev")
+EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD", "dev")
+# API port for testing purposes
+MAILDEV_REST_API_PORT = 1080

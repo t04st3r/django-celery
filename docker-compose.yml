@@ -1,6 +1,8 @@
 version: "3.9"
-services:
-  django:
+
+x-refs:
+  djangoconf:
+    &djangoconf
     env_file: .env.example
     build:
       context: .
@@ -10,9 +12,26 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: "ci"
+      maildev:
+        condition: service_healthy
     volumes:
       - .:/app
+services:
+  django:
+    <<: *djangoconf
+    command: "ci"
+    depends_on:
+      celery:
+        condition: service_healthy
+  celery:
+    <<: *djangoconf
+    command: "celery"
+    healthcheck:
+      test: [ "CMD-SHELL", "make celery-healthcheck" ]
+      start_period: 2s
+      interval: 10s
+      timeout: 5s
+      retries: 5
   postgres:
     image: "postgres:latest"
     restart: on-failure
@@ -32,5 +51,19 @@ services:
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
+      timeout: 5s
+      retries: 5
+  maildev:
+    image: "soulteary/maildev:latest"
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+    environment:
+      - MAILDEV_INCOMING_USER=dev
+      - MAILDEV_INCOMING_PASS=dev
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "1080" ]
+      start_period: 2s
+      interval: 10s
       timeout: 5s
       retries: 5

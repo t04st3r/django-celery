@@ -7,7 +7,7 @@ lint:
 test:
 	pytest
 
-ci: migrate lint test	
+ci: migrate lint test
 
 dump-requirements:
 	jq -r '.default | to_entries[] | .key + .value.version' Pipfile.lock > requirements.txt
@@ -28,4 +28,10 @@ populate-models:
 	python manage.py populate_models
 
 run-dev:
-	python manage.py runserver	
+	python manage.py runserver
+
+celery:
+	python -m celery -A django_celery worker -l info
+
+celery-healthcheck:
+	python -m celery -A django_celery inspect ping
