@@ -11,7 +11,7 @@ To run django locally you need python version to `3.11.3` and pipenv, you can us
 Django needs postgres and redis container to be
 up and running, to do so clone the project, enter in the project folder and hit:
 ```bash
-docker compose up postgres redis
+docker compose up postgres redis maildev celery
 ```
 
 ### Install django deps and run django server
@@ -31,17 +31,24 @@ To run tests you will need also dev dependencies
 ```bash
 pipenv install --dev
 ```
-Create a `.env` file using the `.env.example` file and changing the url to be `localhost` in the following env variables
+Create a `.env` file using the `.env.example` file and changing the url to be `localhost` in the following env variables:
 ```env
 POSTGRES_HOST
 REDIS_URL
+EMAIL_HOST
+CELERY_BROKER_URL
+CELERY_RESULT_BACKEND
 ```
 Your `.env` file should be something like this
 ```env
 #django
-ENV=dev
+ENV=ci
 DJANGO_DEBUG=True
 SECRET_KEY='supersecretkey'
+EMAIL_HOST=localhost
+EMAIL_PORT=1025
+EMAIL_HOST_USER=dev
+EMAIL_HOST_PASSWORD=dev
 
 #db
 POSTGRES_USER=postgres
@@ -52,6 +59,10 @@ POSTGRES_PORT=5432
 
 #redis
 REDIS_URL=redis://localhost:6379/0
+
+#celery
+CELERY_BROKER_URL=redis://localhost:6379
+CELERY_RESULT_BACKEND=redis://localhost:6379
 
 ```
 
@@ -84,7 +95,22 @@ Or
 ```bash
 make populate-models
 ```
-For each command run a random country is selected and all the public holidays for that country would be fetched and stored in the db
+For each command run a random country is selected and all the public holidays for that country would be fetched and stored in the db.
+
+Anytime a `PublicHoliday` model object is created/updated
+a signal is dispatched that, in turn, will schedule a celery task that will basically send an email with the JSON representation of the object. The email are not really sent but will be collected by the `maildev` container.
+
+You can test this flow by trying to change a property, or create a new model via the `django admin`.
+In order to login in the `django admin` you need to create a superuser. It can be done by hitting:
+```bash
+python manage.py createsuperuser
+```
+To test the correct `celery` task execution you can connect to the `maildev` web interface at the url:
+```
+http://localhost:1080
+```
+You should see the mail being sent from the `celery` task (see also `public_holiday.tasks.py` and `public_holiday.signals.py`)
+
 
 ## Testing
 Testing requirements can be installed by
